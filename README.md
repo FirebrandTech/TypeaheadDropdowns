@@ -4,7 +4,7 @@
 
 ## Usage
 
-```
+```js
 <script src="typeahead-dropdowns.js"></script>
 <script>
       TypeaheadDropdowns.init();
@@ -13,7 +13,7 @@
 
 Or, if you only want to add typeahead filtering to certain `<select>`s, you can specify a query selector, like this:
 
-```
+```js
 TypeheadDropdowns.init("select.filterme");
 ```
 
