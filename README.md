@@ -1,8 +1,6 @@
 # Typeahead Dropdowns
 
-> Add typeahead filtering to any <select> with a single JS include.
-
-Here is an [example](example.html)
+> Add typeahead filtering to any `<select>` with a single JS include.
 
 ## Usage
 
@@ -13,7 +11,7 @@ Here is an [example](example.html)
 </script>
 ```
 
-Or, if you only want to add typeahead filtering to certain selects, you can specify a query selector, like this:
+Or, if you only want to add typeahead filtering to certain `<select>`s, you can specify a query selector, like this:
 
 ```
 TypeheadDropdowns.init("select.filterme");
@@ -25,13 +23,17 @@ This is especially useful if you have some long dropdown lists and would like to
 
 **What if my DOM changes after the page loads?**
 
-We use MutationObservers to initialized new or modified <select> elements, so this should not be a problem, but it has only been tested in a few scenarios.
+We use MutationObservers to handle new or modified `<select>` elements, so this should not be a problem, but it has only been tested in a few scenarios.
 
 **Can I use the arrow keys to select elements in the dropdown?**
 
 Yes, we have tried to imitate normal dropdown behavior as much as possible, so the arrow keys move the selection normally.
 
 Currently, the Home and End keys will _not_ jump you to the beginning or end of the dropdown list, however.  Instead they move your cursor in the typehead input.
+
+**Does this work in all browsers?**
+
+We have tested it in the latest Chrome, Firefox, and Edge browsers.  It should theoretically work in IE 10+, but that has not been verified.
 
 ## License
 
