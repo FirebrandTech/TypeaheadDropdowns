@@ -134,6 +134,11 @@ var TypeaheadDropdowns = (function () {
 
         self.select.onfocus = function (evt) {
 
+            if (select.selectedIndex === -1) {
+                // the select is empty
+                return true;
+            }
+
             // position the input
             var selectRect = evt.target.getBoundingClientRect();
             setPosition(input, selectRect.top, selectRect.left, selectRect.width);
@@ -373,7 +378,7 @@ ul.{{classNames.dropdown}} { \
       overflow-y: auto; \
       border: solid rgb(121, 155, 210) 1px; \
       text-align: left; \
-      z-index: 999; \
+      z-index: 999999; \
 } \
 ul.{{classNames.dropdown}} li { \
       list-style-type: none; \
