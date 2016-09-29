@@ -91,7 +91,8 @@ var TypeaheadDropdowns = (function () {
         for (var itemIndex = 0; itemIndex < select.options.length; itemIndex++) {
             var o = select.options[itemIndex];
             var li = document.createElement("li");
-            setText(li, o.text);
+            var itemText = getText(o);
+            setText(li, itemText);
             if (o.selected) {
                 self.selectedItem = li;
                 self.selectedItemIndex = itemIndex;
@@ -150,8 +151,7 @@ var TypeaheadDropdowns = (function () {
             setPosition(ul, inputRect.bottom, inputRect.left, inputRect.width - input.clientLeft, true);
 
             // set the input's value to the current selection
-            var selectedText = select[select.selectedIndex].text;
-            input.value = selectedText;
+            input.value = getText(select[select.selectedIndex]);
 
             self.update(true);
             input.select();
@@ -174,7 +174,7 @@ var TypeaheadDropdowns = (function () {
         self.input.onblur = function (evt) {
             selectedText = input.value;
             for (var i = 0; i < select.options.length; i++) {
-                if (getText(select.options[i]).trim() === selectedText) {
+                if (getText(select.options[i]) === selectedText) {
                     if (select.selectedIndex == i) break; // no change
                     select.selectedIndex = i;
                     self.selectedItem = self.ul.getElementsByTagName("li")[i];
@@ -458,18 +458,18 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
 
     var setText = function (elt, text) {
         if (elt.hasOwnProperty('innerText')) {
-            elt.innerText = text;
+            elt.innerText = text.trim();
         } else {
-            elt.textContent = text;
+            elt.textContent = text.trim();
         }
     };
 
     var getText = function (elt, text) {
         if (typeof(elt) === 'undefined') return;
         if (elt.hasOwnProperty('innerText')) {
-            return elt.innerText;
+            return elt.innerText.trim();
         } else {
-            return elt.textContent;
+            return elt.textContent.trim();
         }
     };
 
