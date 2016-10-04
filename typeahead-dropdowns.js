@@ -147,8 +147,7 @@ var TypeaheadDropdowns = (function () {
             self.show(); // if you don't call this here, the input won't have a bounding rectangle when you call input.getBoundingClientRect()
 
             // position the ul
-            var inputRect = input.getBoundingClientRect();
-            setPosition(ul, inputRect.bottom, inputRect.left, inputRect.width - input.clientLeft, true);
+            self.positionList(input, ul);
 
             // set the input's value to the current selection
             input.value = getText(select[select.selectedIndex]);
@@ -309,6 +308,7 @@ var TypeaheadDropdowns = (function () {
         this.ul.hidden = true;
         this.select.hidden = false;
         this.select.blur();
+        this.ulPosition = undefined;
     };
 
     TypeaheadDropdown.prototype.update = function (showAllItems) {
@@ -343,6 +343,8 @@ var TypeaheadDropdowns = (function () {
         hideThese.map(function (item) { addClass(item, classNames.hidden) });
         showThese.map(function (item) { removeClass(item, classNames.hidden) });
 
+        self.positionList(self.input, self.ul);
+
         if (typeof (self.selectedItem) !== 'undefined') {
             self.highlightSelected();
         }
@@ -352,6 +354,35 @@ var TypeaheadDropdowns = (function () {
 
         if (!itemIsVisible(self.selectedItem, self.ul)) {
             self.ul.scrollTop = self.selectedItem.offsetTop;
+        }
+    };
+
+    // Normally, the ul is rendered below the input.  However, if that would place the ul
+    // off the bottom of the viewport, we should render the ul above the input.
+    // If it won't fit above or below, default to below.
+
+    TypeaheadDropdown.prototype.positionList = function(input, ul) {
+        var self = this,
+            inputRect = input.getBoundingClientRect(),
+            ulHeight = ul.offsetHeight,
+            ulBottom = inputRect.top + inputRect.height + ulHeight, // assumes placement will be below the input
+            windowBottom = window.innerHeight;
+
+        // At this point, the ul is rendered at the bottom of the body, so it has a height,
+        // but you cannot use its offsetTop.
+        // The input is rendered and correctly positioned, so you can use its offsetTop.
+
+        if (self.ulPosition !== 'above' && (self.ulPosition === 'below' || ulBottom <= windowBottom || inputRect.top - ulHeight < 0)) {
+            // If we've previously placed the ul below,
+            // or if the ul will fit below,
+            // or it the ul will not fit above,
+            // then place the ul below the input.
+            setPosition(ul, inputRect.bottom, inputRect.left, inputRect.width - input.clientLeft, true);
+            self.ulPosition = 'below';
+        } else {
+            // put the ul above the input
+            setPosition(ul, inputRect.top - ulHeight, inputRect.left, inputRect.width - input.clientLeft, true);
+            self.ulPosition = 'above';
         }
     };
 
