@@ -17,6 +17,12 @@ Or, if you only want to add typeahead filtering to certain `<select>`s, you can 
 TypeheadDropdowns.init("select.filterme");
 ```
 
+You can also turn all `<select>` element into typeaheads _except_ those that match a selector, like this:
+
+```js
+TypeaheadDropdowns.init("select", "select.not-typeahead");
+```
+
 ## Notes
 
 This is especially useful if you have some long dropdown lists and would like to be able to type a few characters to filter down the list.  It does not use AJAX to load the list content during filtering, so it won't save you on loading the page initially, but it will make a long dropdown more usable.

@@ -1,8 +1,8 @@
 var TypeaheadDropdowns = (function () {
 
-    this._initialized = false;
-    this.namingPrefix = 'fbt-dd-'; // css rules and ids will be prepended with this
-    this.classNames = {
+    var _initialized = false;
+    var namingPrefix = 'fbt-tadd-'; // css rules and ids will be prepended with this
+    var classNames = {
         highlight: namingPrefix + 'highlight',
         hidden: namingPrefix + 'hidden',
         input: namingPrefix + 'autocomplete',
@@ -386,13 +386,12 @@ var TypeaheadDropdowns = (function () {
         }
     };
 
-    var injectStyles = function (namingPrefix) {
+    var injectStyles = function () {
         // Inject styles into the <head>.  Anything in {{braces}} will be eval'd.
         var self = this,
             styles,
             head = document.head || document.getElementsByTagName('head')[0],
-            styleElement = document.createElement('style'),
-            classNames = self.classNames;
+            styleElement = document.createElement('style');
 
         styles = '.{{classNames.hidden}} { \
       display: none; \
@@ -552,11 +551,21 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
         }
     };
 
+    // Cross-browser way to convert a nodelist to an array:
+    var nodeListToArray = function (nodeList) {
+        var myArray = [];
+        for (var i = 0; i < nodeList.length; i++) {
+            var self = nodeList[i];
+            myArray.push(self);
+        }
+        return myArray;
+    }
+
     // MutationObserver code:
     // This handles any <select>s that are added or removed after the initial call to TypeaheadDropdowns.init().
     // For example, if a page uses AJAX to load a <select>, or if the <options> in a <select> are modified via AJAX,
     // this observer code should handle initializing the TypeaheadDropdown.
-    var initObserver = function (dropdownSelector) {
+    var initObserver = function (dropdownSelector, blacklistSelector) {
 
         var self = this,
         observerConfig = {
@@ -578,17 +587,20 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
                     if (n.nodeType != 1) continue; // ignore non-Element nodes
 
                     var childSelects = n.querySelectorAll(dropdownSelector);
+                    var blacklistSelects = nodeListToArray(n.querySelectorAll(blacklistSelector));
 
-                    if (n.matches(dropdownSelector)) {
+                    if (n.matches(dropdownSelector) && !n.matches(blacklistSelector)) {
                         newSelects.push(n);
                         observer.observe(n, observerConfig)
                     } else if (childSelects.length > 0) {
-                        for (var j=0; j<childSelects.length; j++) {
+                        for (var j = 0; j < childSelects.length; j++) {
+                            if (blacklistSelects.includes(childSelects[j])) continue;
                             newSelects.push(childSelects[j]);
                             observer.observe(childSelects[j], observerConfig);
                         }
                     } else if (n.tagName.toLowerCase() === 'option') {
                         if (!arrayContains(modifiedSelects, n.parentNode)) {
+                            if (blacklistSelects.includes(n.parentNode)) continue;
                             modifiedSelects.push(n.parentNode);
                         }
                     }
@@ -622,7 +634,9 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
 
         // this will catch changes to a <select>'s option elements
         var selectNodes = document.querySelectorAll(dropdownSelector);
-        for (var i=0; i<selectNodes.length; i++) {
+        var blacklistSelects = nodeListToArray(document.querySelectorAll(blacklistSelector));
+        for (var i = 0; i < selectNodes.length; i++) {
+            if (blacklistSelects.includes(selectNodes[i])) continue;
             observer.observe(selectNodes[i], observerConfig);
         };
     };
@@ -634,35 +648,41 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
         })()
     };
 
-    var init = function (dropdownSelector) {
+    var init = function (dropdownSelector, blacklistSelector) {
 
-        var self = this;
-        if (self._initialized) return;
+        // dropdownSelector = a CSS selector for the <select> elements that we want to turn into typeahead dropdowns.
+        // blacklistSelector = a CSS selector for elements that we do NOT want to turn into typeaheads, even if they match dropdownSelector.
+        // Both of these are optional.  By default, all <select> elements will become typeaheads.
+
+        if (_initialized) return;
 
         // If MutationObserver is not defined, silently do nothing.  Users will see regular dropdowns.
         if (MutationObserver) {
 
             dropdownSelector = dropdownSelector || 'select'; // update all selects by default
 
-            initObserver(dropdownSelector);
+            initObserver(dropdownSelector, blacklistSelector);
 
             injectStyles();
 
             loadPolyfills();
 
             var selects = document.querySelectorAll(dropdownSelector);
+            var blacklistedSelects = nodeListToArray(document.querySelectorAll(blacklistSelector));
+
             for (var i=0; i<selects.length; i++) {
                 if (selects[i].tagName.toLowerCase() !== 'select') {
                     console.log("The selector passed to TypeaheadDropdowns.init() should only include <select> elements.  Skipping: " + selects[i].tagName);
                     continue;
                 }
+                if (blacklistedSelects.includes(selects[i])) continue;
                 new TypeaheadDropdown(selects[i]);
             }
         } else {
             console.log("TypeaheadDropdowns cannot be initialized, because this browser does not support the MutationObserver API.");
         }
 
-        self._initialized = true;
+        _initialized = true;
     };
 
     // export public methods
