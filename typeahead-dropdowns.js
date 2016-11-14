@@ -676,6 +676,7 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
                     continue;
                 }
                 if (blacklistedSelects.includes(selects[i])) continue;
+                //if (selects[i].multiple) continue; // It doesn't make sense to allow typeahead on multi-selects.
                 new TypeaheadDropdown(selects[i]);
             }
         } else {
