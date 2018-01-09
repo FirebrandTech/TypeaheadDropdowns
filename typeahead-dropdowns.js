@@ -1,3 +1,32 @@
+// This Array.includes polyfill is required for IE.
+// From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes?v=example#Polyfill
+if (!Array.prototype.includes) {
+    Object.defineProperty(Array.prototype, "includes", {
+        value: function (searchElement, fromIndex) {
+            if (this == null) throw new TypeError('"this" is null or not defined');
+
+            var o = Object(this);
+            var len = o.length >>> 0;
+            if (len === 0) {
+                return false;
+            }
+            var n = fromIndex | 0;
+            var k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+            function sameValueZero(x, y) {
+                return x === y || (typeof x === "number" && typeof y === "number" && isNaN(x) && isNaN(y));
+            }
+            while (k < len) {
+                if (sameValueZero(o[k], searchElement)) {
+                    return true;
+                }
+                k++;
+            }
+            return false;
+        }
+    });
+}
+
+
 var TypeaheadDropdowns = (function () {
 
     var _initialized = false;
@@ -78,6 +107,7 @@ var TypeaheadDropdowns = (function () {
         self.visibleItems = undefined;
         self.visibleItemPositions = [],
         self.selectedItemValue = self.input.value;
+        self.suppressScrollHandler = false; // a hack for not triggering a scroll event if rendering the list changes the height of the document
 
         // Set up the input and list elements
         input.className = classNames.input;
@@ -144,7 +174,11 @@ var TypeaheadDropdowns = (function () {
             var selectRect = evt.target.getBoundingClientRect();
             setPosition(input, selectRect.top, selectRect.left, selectRect.width);
 
+            var docHeight = document.body.offsetHeight;
             self.show(); // if you don't call this here, the input won't have a bounding rectangle when you call input.getBoundingClientRect()
+            if (document.body.offsetHeight != docHeight) {
+                self.suppressScrollHandler = true;
+            }
 
             // position the ul
             self.positionList(input, ul);
@@ -157,7 +191,7 @@ var TypeaheadDropdowns = (function () {
             return false;
         };
 
-        var blurTheInput = function() {
+        var blurTheInput = function () {
             // manually trigger the input's onblur event
             var blurInputEvent = document.createEvent('UIEvent');
             blurInputEvent.initEvent('blur', true, true);
@@ -167,6 +201,10 @@ var TypeaheadDropdowns = (function () {
         document.addEventListener('scroll', function (evt) {
             // When the user scrolls, the dropdown should auto-hide, just like a normal dropdown.
             if (!self.visible) return;
+            if (self.suppressScrollHandler) {
+                self.suppressScrollHandler = false;
+                return;
+            }
             blurTheInput();
         });
 
@@ -239,7 +277,7 @@ var TypeaheadDropdowns = (function () {
                         self.ul.scrollTop = self.selectedItem.offsetTop - (self.ul.clientHeight - self.selectedItem.offsetHeight);
                     }
                 }
-            } else if (e.keyCode === 10 || e.keyCode === 13 || e.keyCode === 27 ) { // line feed, Enter, Esc
+            } else if (e.keyCode === 10 || e.keyCode === 13 || e.keyCode === 27) { // line feed, Enter, Esc
                 blurTheInput();
                 return false;
             }
@@ -328,7 +366,7 @@ var TypeaheadDropdowns = (function () {
             visibleItemPositions = [],
             vp = 0;
 
-        for (var i=0; i<items.length; i++) {
+        for (var i = 0; i < items.length; i++) {
             var item = items[i];
 
             if (showAllItems || getText(item).toLowerCase().match(textSafe) !== null) {
@@ -361,7 +399,7 @@ var TypeaheadDropdowns = (function () {
     // off the bottom of the viewport, we should render the ul above the input.
     // If it won't fit above or below, default to below.
 
-    TypeaheadDropdown.prototype.positionList = function(input, ul) {
+    TypeaheadDropdown.prototype.positionList = function (input, ul) {
         var self = this,
             inputRect = input.getBoundingClientRect(),
             ulHeight = ul.offsetHeight,
@@ -495,7 +533,7 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
     };
 
     var getText = function (elt, text) {
-        if (typeof(elt) === 'undefined') return;
+        if (typeof (elt) === 'undefined') return;
         if (elt.hasOwnProperty('innerText')) {
             return elt.innerText.trim();
         } else {
@@ -507,7 +545,7 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
         var id = "",
             chars = "abcdefghijklmnopqrstuvwxyz";
 
-        for (var i=0; i<len; i++) {
+        for (var i = 0; i < len; i++) {
             id += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return id;
@@ -582,7 +620,7 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
                 removedSelects = [];
 
             mutations.forEach(function (mutation) {
-                for (var i=0; i<mutation.addedNodes.length; i++) {
+                for (var i = 0; i < mutation.addedNodes.length; i++) {
                     var n = mutation.addedNodes[i];
                     if (n.nodeType != 1) continue; // ignore non-Element nodes
 
@@ -607,7 +645,7 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
                 }
 
                 // if an ancestor of a <select> is removed, we are not currently detecting that
-                for (var i=0; i<mutation.removedNodes.length; i++) {
+                for (var i = 0; i < mutation.removedNodes.length; i++) {
                     var n = mutation.removedNodes[i];
                     if (typeof (n.tagName) === 'undefined') continue;
                     if (n.matches(dropdownSelector)) {
@@ -670,13 +708,12 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
             var selects = document.querySelectorAll(dropdownSelector);
             var blacklistedSelects = nodeListToArray(document.querySelectorAll(blacklistSelector));
 
-            for (var i=0; i<selects.length; i++) {
+            for (var i = 0; i < selects.length; i++) {
                 if (selects[i].tagName.toLowerCase() !== 'select') {
                     console.log("The selector passed to TypeaheadDropdowns.init() should only include <select> elements.  Skipping: " + selects[i].tagName);
                     continue;
                 }
                 if (blacklistedSelects.includes(selects[i])) continue;
-                if (selects[i].multiple) continue; // It doesn't make sense to allow typeahead on multi-selects.
                 new TypeaheadDropdown(selects[i]);
             }
         } else {
