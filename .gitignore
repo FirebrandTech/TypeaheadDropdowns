@@ -1,3 +1,6 @@
 *.jar
 *.bat
 node_modules/*
+mutation-observer-example.html
+notes.md
+*.bookmarklet.js
