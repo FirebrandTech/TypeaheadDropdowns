@@ -747,8 +747,30 @@ ul.{{classNames.dropdown}} li span.{{classNames.matchingText}} { \
         for (var i = 0; i < mutation.removedNodes.length; i++) {
           var n = mutation.removedNodes[i];
           if (typeof n.tagName === "undefined") continue;
+
+          // handle options being removed from a select
+          if (n.tagName.toLowerCase() === "option") {
+            if (
+              !arrayContains(modifiedSelects, mutation.target) &&
+              !mutation.target.matches(blacklistSelector)
+            ) {
+              modifiedSelects.push(mutation.target);
+            }
+          }
+
           if (n.matches(dropdownSelector)) {
             removedSelects.push(n);
+          }
+        }
+
+        // refresh the select if the text node inside the option tag is modified
+        if (mutation.target.tagName.toLowerCase() === "option") {
+          let parentSelect = mutation.target.parentNode;
+          if (
+            !arrayContains(modifiedSelects, parentSelect) &&
+            !parentSelect.matches(blacklistSelector)
+          ) {
+            modifiedSelects.push(parentSelect);
           }
         }
       });
